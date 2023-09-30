@@ -36,7 +36,6 @@ function sortStringsByConsonants(strings) {
   return sortedStrings;
 }
 
-
 function countMaxAdjacentConsonants(string) {
   let count = 0;
   let tempString = "";
