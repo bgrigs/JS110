@@ -10,22 +10,19 @@ Play again?
 If yes, go to #1
 Goodbye!
 
-
 Keeping score
 A match is 2 or more games
 A match is won when someone wins 5 games
 A global var for the # of games needed to win is okay but but no other global vars
 ---Not sure how to do this without a global variable.
 ---If I set a local variable in a function and initialize it to 0 won't it constantly be reset to 0 every time the function is called?
-
 */
-
 
 const readline = require('readline-sync');
 const INITIAL_MARKER = ' ';
 const HUMAN_MARKER = 'X';
 const COMPUTER_MARKER = 'O';
-const winningLines = [
+const WINNING_LINES = [
   [1, 2, 3], [4, 5, 6], [7, 8, 9],
   [1, 4, 7], [2, 5, 8], [3, 6, 9],
   [1, 5, 9], [3, 5, 7]
@@ -50,15 +47,15 @@ function playGame(board) {
     playerChoosesSquare(board);
     if (someoneWon(board) || boardFull(board)) break;
 
-    let squareToDefend = findAtRiskSquareAI(winningLines, board);
-    computerChoosesSquare(board, squareToDefend);
+    // let squareToDefend = findAtRiskSquareAI(winningLines, board);
+    computerChoosesSquare(board);
     if (someoneWon(board) || boardFull(board)) break;
   }
 }
 
 function outputResults(board) {
   if (someoneWon(board)) {
-    console.log(`${detectWinner(winningLines, board)} won!`);
+    console.log(`${detectWinner(WINNING_LINES, board)} won!`);
   } else {
     console.log("It's a tie.");
   }
@@ -135,28 +132,56 @@ function playerChoosesSquare(board) {
   board[square] = HUMAN_MARKER;
 }
 
-function computerChoosesSquare(board, squareToDefend) {
+function computerChoosesSquare(board) {
   let square;
 
-  if (squareToDefend !== undefined) {
-    square = squareToDefend;
-  } else {
+  for (let lineIndex = 0; lineIndex < WINNING_LINES.length; lineIndex += 1) {
+    let line = WINNING_LINES[lineIndex];
+    square = findAtRiskSquareAI(line, board);
+    if (square) break;
+  }
+
+  if (square === undefined) {
     let randomIndex = Math.floor(Math.random() * emptySquares(board).length);
-    console.log(`randomIndex is ${randomIndex} which is ${typeof randomIndex}`);
     square = emptySquares(board)[randomIndex];
   }
 
   board[square] = COMPUTER_MARKER;
 }
 
-function someoneWon(board) {
-  return !!detectWinner(winningLines, board);
+function findAtRiskSquareAI(line, board) {
+  let markersInLine = line.map(square => board[square]);
+  console.log(`the markers in the line are ${markersInLine}.`);
+
+  let computerWinAvailable = markersInLine.filter(marker => marker === COMPUTER_MARKER)
+    .length === 2;
+  let humanWinAvailable = markersInLine.filter(marker => marker === HUMAN_MARKER)
+    .length === 2;
+
+  if (computerWinAvailable) {
+    console.log(`The winning square is ${line.find(square => board[square] === INITIAL_MARKER)}`);
+    return line.find(square => board[square] === INITIAL_MARKER);
+  } else if (humanWinAvailable) {
+    console.log(`The square to defend is ${line.find(square => board[square] === INITIAL_MARKER)}`);
+    return line.find(square => board[square] === INITIAL_MARKER);
+  }
+
+  //computer gets 2 in row
+  // if (markersInLine.filter(marker => marker === COMPUTER_MARKER).length === 1) {
+  //   return line.find(square => board[square] === INITIAL_MARKER);
+  // }
+
+  return undefined;
 }
 
-function detectWinner(winningLines, board) {
-  for (let line = 0; line < winningLines.length; line += 1) {
-    if (winningLines[line].every(square => board[square] === 'X')) return 'You';
-    if (winningLines[line].every(square => board[square] === 'O')) return 'Computer';
+function someoneWon(board) {
+  return !!detectWinner(WINNING_LINES, board);
+}
+
+function detectWinner(WINNING_LINES, board) {
+  for (let line = 0; line < WINNING_LINES.length; line += 1) {
+    if (WINNING_LINES[line].every(square => board[square] === 'X')) return 'You';
+    if (WINNING_LINES[line].every(square => board[square] === 'O')) return 'Computer';
   }
 
   return null;
@@ -175,29 +200,3 @@ function joinOr(arr, punctuation = ', ', word = 'or') {
             ` ${word} ${arr[arr.length - 1]}`;
   }
 }
-
-function findAtRiskSquareAI(winningLines, board) {
-  let squareToDefend;
-
-  for (let lineIndex = 0; lineIndex < winningLines.length; lineIndex += 1) {
-    let line = winningLines[lineIndex];
-    let humanMarkersinLine = 0;
-
-    for (let squareIndex = 0; squareIndex < line.length; squareIndex += 1) {
-      let square = line[squareIndex];
-      if (board[square] === 'X') humanMarkersinLine += 1;
-      if (humanMarkersinLine > 1) {
-        let findAtRiskSquare = line.filter(square => board[square] === INITIAL_MARKER);
-        squareToDefend = findAtRiskSquare[0];
-        console.log(`defend ${squareToDefend}. this is a ${typeof squareToDefend}`);
-        break;
-      }
-    }
-
-    if (squareToDefend !== undefined) break;
-  }
-
-  return squareToDefend;
-}
-
-
