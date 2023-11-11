@@ -47,8 +47,7 @@ function playGame(board) {
     playerChoosesSquare(board);
     if (someoneWon(board) || boardFull(board)) break;
 
-    // let squareToDefend = findAtRiskSquareAI(winningLines, board);
-    computerChoosesSquare(board);
+    computerChoosesStrategy(board);
     if (someoneWon(board) || boardFull(board)) break;
   }
 }
@@ -90,9 +89,8 @@ function initializeBoard() {
 }
 
 function displayBoard(board) {
-  // console.clear();
+  console.clear();
   console.log(`You are ${HUMAN_MARKER}. Computer is ${COMPUTER_MARKER}`);
-
 
   console.log("");
   console.log('     |     |     ');
@@ -109,8 +107,7 @@ function displayBoard(board) {
 }
 
 function emptySquares(board) {
-  return Object.keys(board)
-    .filter(key => board[key] === INITIAL_MARKER);
+  return Object.keys(board).filter(key => board[key] === INITIAL_MARKER);
 }
 
 function boardFull(board) {
@@ -132,46 +129,78 @@ function playerChoosesSquare(board) {
   board[square] = HUMAN_MARKER;
 }
 
-function computerChoosesSquare(board) {
-  let square;
+function computerChoosesStrategy(board) {
+  let squareToWin;
+  let squareToDefend;
+  let squareToTwoInLine;
 
   for (let lineIndex = 0; lineIndex < WINNING_LINES.length; lineIndex += 1) {
     let line = WINNING_LINES[lineIndex];
-    square = findAtRiskSquareAI(line, board);
-    if (square) break;
+    let markersInLine = line.map(square => board[square]);
+    if (offenseAI(markersInLine)) {
+      console.log(`line ${line} has the following markers ${markersInLine}`);
+      squareToWin = findAtRiskSquareAI(line, board);
+    } else if (defenseAI(markersInLine)) {
+      console.log(`line ${line} has the following markers ${markersInLine}`);
+      squareToDefend = findAtRiskSquareAI(line, board);
+      console.log(`the squareToDefend is ${squareToDefend}`);
+    } else if (oneInRowAI(markersInLine)) {
+      squareToTwoInLine = chooseSecondSquareInLineAI(line, board);
+    }
   }
 
-  if (square === undefined) {
-    let randomIndex = Math.floor(Math.random() * emptySquares(board).length);
-    square = emptySquares(board)[randomIndex];
-  }
+  computerChoosesSquare(squareToWin, squareToDefend, squareToTwoInLine, board);
+}
 
-  board[square] = COMPUTER_MARKER;
+function computerChoosesSquare(squareToWin, squareToDefend, squareToTwoInLine, board) {
+  if (squareToWin) {
+    board[squareToWin] = COMPUTER_MARKER;
+    console.log(`square to win is ${squareToWin}`);
+  } else if (squareToDefend) {
+    board[squareToDefend] = COMPUTER_MARKER;
+    console.log(`square to defend is ${squareToDefend}`);
+  } else if (board['5'] === INITIAL_MARKER)  {
+    board['5'] = COMPUTER_MARKER;
+    console.log(`computer chooses square 5`);
+  } else if (squareToTwoInLine) {
+    board[squareToTwoInLine] = COMPUTER_MARKER;
+    console.log(`computer tries getting two in line by going to ${squareToTwoInLine}`);
+  } else {
+    let randomIndex = getRandomIndex(emptySquares(board));
+    let randomSquare = emptySquares(board)[randomIndex];
+    board[randomSquare] = COMPUTER_MARKER;
+    console.log(`computer chooses random square which is ${randomSquare}`);
+  }
+}
+
+function offenseAI(markersInLine) {
+  return markersInLine.filter(marker => marker === COMPUTER_MARKER).length === 2 &&
+         markersInLine.includes(INITIAL_MARKER);
+}
+
+function defenseAI(markersInLine) {
+  return markersInLine.filter(marker => marker === HUMAN_MARKER).length === 2 &&
+         markersInLine.includes(INITIAL_MARKER);
+}
+
+function oneInRowAI(markersInLine) {
+  console.log(markersInLine);
+  return markersInLine.filter(marker => marker === COMPUTER_MARKER).length === 1 &&
+         markersInLine.filter(marker => marker === INITIAL_MARKER).length === 2;
 }
 
 function findAtRiskSquareAI(line, board) {
-  let markersInLine = line.map(square => board[square]);
-  console.log(`the markers in the line are ${markersInLine}.`);
+  return line.find(square => board[square] === INITIAL_MARKER);
+}
 
-  let computerWinAvailable = markersInLine.filter(marker => marker === COMPUTER_MARKER)
-    .length === 2;
-  let humanWinAvailable = markersInLine.filter(marker => marker === HUMAN_MARKER)
-    .length === 2;
+function chooseSecondSquareInLineAI(line, board) {
+  let emptySpacesInLine = line.filter(square => board[square] === INITIAL_MARKER);
+  let randomIndex = getRandomIndex(emptySpacesInLine);
+  return emptySpacesInLine[randomIndex];
+}
 
-  if (computerWinAvailable) {
-    console.log(`The winning square is ${line.find(square => board[square] === INITIAL_MARKER)}`);
-    return line.find(square => board[square] === INITIAL_MARKER);
-  } else if (humanWinAvailable) {
-    console.log(`The square to defend is ${line.find(square => board[square] === INITIAL_MARKER)}`);
-    return line.find(square => board[square] === INITIAL_MARKER);
-  }
-
-  //computer gets 2 in row
-  // if (markersInLine.filter(marker => marker === COMPUTER_MARKER).length === 1) {
-  //   return line.find(square => board[square] === INITIAL_MARKER);
-  // }
-
-  return undefined;
+function getRandomIndex(arr) {
+  return Math.floor(Math.random() * arr.length);
 }
 
 function someoneWon(board) {
