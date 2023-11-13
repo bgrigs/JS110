@@ -27,11 +27,41 @@ const WINNING_LINES = [
   [1, 4, 7], [2, 5, 8], [3, 6, 9],
   [1, 5, 9], [3, 5, 7]
 ];
+const FIRST_TURN = 'choose';
+
+function chooseFirstTurn() {
+  let getsFirstTurn;
+  console.log("Who gets the first turn? (Enter 1 if you'd like to go first and 2 if you'd like the computer to go first)");
+  let answer = readline.prompt().trim();
+  let acceptedAnswers = ['1', '2'];
+
+  while (true) {
+    if (acceptedAnswers.includes(answer)) {
+      break;
+    } else {
+      console.log('That is an invalid response. Please enter 1 or 2');
+      answer = readline.prompt().trim();
+    }
+  }
+
+  if (answer === '1') {
+    getsFirstTurn = 'human';
+  } else if (answer === '2') {
+    getsFirstTurn = 'computer';
+  }
+  return getsFirstTurn;
+}
 
 while (true) {
+  let getsFirstTurn;
   let board = initializeBoard();
-  playGame(board);
+
+  if (FIRST_TURN === 'choose') {
+    getsFirstTurn = chooseFirstTurn();
+  }
+
   displayBoard(board);
+  playGame(board, getsFirstTurn);
   outputResults(board);
 
   if (!playAgain()) {
@@ -40,16 +70,31 @@ while (true) {
   }
 }
 
-function playGame(board) {
-  while (true) {
-    displayBoard(board);
+function playGame(board, getsFirstTurn) {
+  let firstPlayer;
+  let secondPlayer;
 
-    playerChoosesSquare(board);
-    if (someoneWon(board) || boardFull(board)) break;
-
-    computerChoosesStrategy(board);
-    if (someoneWon(board) || boardFull(board)) break;
+  if (getsFirstTurn === 'human') {
+    firstPlayer = () => humanChoosesSquare(board);
+    secondPlayer = () => computerChoosesStrategy(board);
+  } else if (getsFirstTurn === 'computer') {
+    firstPlayer = () =>  computerChoosesStrategy(board);
+    secondPlayer = () => humanChoosesSquare(board);
   }
+
+  while (true) {
+    firstPlayer();
+    displayBoard(board);
+    if (gameOver(board)) break;
+
+    secondPlayer();
+    displayBoard(board);
+    if (gameOver(board)) break;
+  }
+}
+
+function gameOver(board) {
+  return someoneWon(board) || boardFull(board);
 }
 
 function outputResults(board) {
@@ -75,6 +120,7 @@ function playAgain() {
     }
   }
 
+  console.clear();
   return answer === 'y' || answer === 'yes';
 }
 
@@ -114,7 +160,7 @@ function boardFull(board) {
   return emptySquares(board).length === 0;
 }
 
-function playerChoosesSquare(board) {
+function humanChoosesSquare(board) {
   let square;
 
   while (true) {
@@ -122,7 +168,6 @@ function playerChoosesSquare(board) {
     square = readline.prompt().trim();
 
     if (emptySquares(board).includes(square)) break;
-
     console.log('That is not a valid choice. Please try again.');
   }
 
@@ -137,14 +182,14 @@ function computerChoosesStrategy(board) {
   for (let lineIndex = 0; lineIndex < WINNING_LINES.length; lineIndex += 1) {
     let line = WINNING_LINES[lineIndex];
     let markersInLine = line.map(square => board[square]);
-    if (offenseAI(markersInLine)) {
-      console.log(`line ${line} has the following markers ${markersInLine}`);
+    if (twoInLineAI(markersInLine, COMPUTER_MARKER)) {
+      // console.log(`line ${line} has the following markers ${markersInLine}`);
       squareToWin = findAtRiskSquareAI(line, board);
-    } else if (defenseAI(markersInLine)) {
-      console.log(`line ${line} has the following markers ${markersInLine}`);
+    } else if (twoInLineAI(markersInLine, HUMAN_MARKER)) {
+      // console.log(`line ${line} has the following markers ${markersInLine}`);
       squareToDefend = findAtRiskSquareAI(line, board);
-      console.log(`the squareToDefend is ${squareToDefend}`);
-    } else if (oneInRowAI(markersInLine)) {
+      // console.log(`the squareToDefend is ${squareToDefend}`);
+    } else if (oneInLineAI(markersInLine)) {
       squareToTwoInLine = chooseSecondSquareInLineAI(line, board);
     }
   }
@@ -155,36 +200,30 @@ function computerChoosesStrategy(board) {
 function computerChoosesSquare(squareToWin, squareToDefend, squareToTwoInLine, board) {
   if (squareToWin) {
     board[squareToWin] = COMPUTER_MARKER;
-    console.log(`square to win is ${squareToWin}`);
+    // console.log(`square to win is ${squareToWin}`);
   } else if (squareToDefend) {
     board[squareToDefend] = COMPUTER_MARKER;
-    console.log(`square to defend is ${squareToDefend}`);
+    // console.log(`square to defend is ${squareToDefend}`);
   } else if (board['5'] === INITIAL_MARKER)  {
     board['5'] = COMPUTER_MARKER;
-    console.log(`computer chooses square 5`);
+    // console.log(`computer chooses square 5`);
   } else if (squareToTwoInLine) {
     board[squareToTwoInLine] = COMPUTER_MARKER;
-    console.log(`computer tries getting two in line by going to ${squareToTwoInLine}`);
+    // console.log(`computer tries getting two in line by going to ${squareToTwoInLine}`);
   } else {
     let randomIndex = getRandomIndex(emptySquares(board));
     let randomSquare = emptySquares(board)[randomIndex];
     board[randomSquare] = COMPUTER_MARKER;
-    console.log(`computer chooses random square which is ${randomSquare}`);
+    // console.log(`computer chooses random square which is ${randomSquare}`);
   }
 }
 
-function offenseAI(markersInLine) {
-  return markersInLine.filter(marker => marker === COMPUTER_MARKER).length === 2 &&
+function twoInLineAI(markersInLine, player) {
+  return markersInLine.filter(marker => marker === player).length === 2 &&
          markersInLine.includes(INITIAL_MARKER);
 }
 
-function defenseAI(markersInLine) {
-  return markersInLine.filter(marker => marker === HUMAN_MARKER).length === 2 &&
-         markersInLine.includes(INITIAL_MARKER);
-}
-
-function oneInRowAI(markersInLine) {
-  console.log(markersInLine);
+function oneInLineAI(markersInLine) {
   return markersInLine.filter(marker => marker === COMPUTER_MARKER).length === 1 &&
          markersInLine.filter(marker => marker === INITIAL_MARKER).length === 2;
 }
