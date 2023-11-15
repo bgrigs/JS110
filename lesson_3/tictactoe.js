@@ -22,16 +22,16 @@ const readline = require('readline-sync');
 const INITIAL_MARKER = ' ';
 const HUMAN_MARKER = 'X';
 const COMPUTER_MARKER = 'O';
+const FIRST_TURN = 'choose';
 const WINNING_LINES = [
   [1, 2, 3], [4, 5, 6], [7, 8, 9],
   [1, 4, 7], [2, 5, 8], [3, 6, 9],
   [1, 5, 9], [3, 5, 7]
 ];
-const FIRST_TURN = 'choose';
 
 function chooseFirstTurn() {
   let getsFirstTurn;
-  console.log("Who gets the first turn? (Enter 1 if you'd like to go first and 2 if you'd like the computer to go first)");
+  console.log("Welcome to Tic Tac Toe. Enter 1 if you'd like to go first. Enter 2 if you'd like the computer to go first.");
   let answer = readline.prompt().trim();
   let acceptedAnswers = ['1', '2'];
 
@@ -49,15 +49,23 @@ function chooseFirstTurn() {
   } else if (answer === '2') {
     getsFirstTurn = 'computer';
   }
+
   return getsFirstTurn;
 }
 
 while (true) {
-  let getsFirstTurn;
   let board = initializeBoard();
+  let getsFirstTurn;
 
-  if (FIRST_TURN === 'choose') {
-    getsFirstTurn = chooseFirstTurn();
+  switch (FIRST_TURN) {
+    case 'choose':
+      getsFirstTurn = chooseFirstTurn();
+      break;
+    case 'human':
+      getsFirstTurn = 'human';
+      break;
+    case 'computer':
+      getsFirstTurn = 'computer';
   }
 
   displayBoard(board);
@@ -84,16 +92,15 @@ function playGame(board, getsFirstTurn) {
 
   while (true) {
     firstPlayer();
-    displayBoard(board);
     if (gameOver(board)) break;
 
     secondPlayer();
-    displayBoard(board);
     if (gameOver(board)) break;
   }
 }
 
 function gameOver(board) {
+  displayBoard(board);
   return someoneWon(board) || boardFull(board);
 }
 
@@ -183,12 +190,9 @@ function computerChoosesStrategy(board) {
     let line = WINNING_LINES[lineIndex];
     let markersInLine = line.map(square => board[square]);
     if (twoInLineAI(markersInLine, COMPUTER_MARKER)) {
-      // console.log(`line ${line} has the following markers ${markersInLine}`);
       squareToWin = findAtRiskSquareAI(line, board);
     } else if (twoInLineAI(markersInLine, HUMAN_MARKER)) {
-      // console.log(`line ${line} has the following markers ${markersInLine}`);
       squareToDefend = findAtRiskSquareAI(line, board);
-      // console.log(`the squareToDefend is ${squareToDefend}`);
     } else if (oneInLineAI(markersInLine)) {
       squareToTwoInLine = chooseSecondSquareInLineAI(line, board);
     }
@@ -200,21 +204,16 @@ function computerChoosesStrategy(board) {
 function computerChoosesSquare(squareToWin, squareToDefend, squareToTwoInLine, board) {
   if (squareToWin) {
     board[squareToWin] = COMPUTER_MARKER;
-    // console.log(`square to win is ${squareToWin}`);
   } else if (squareToDefend) {
     board[squareToDefend] = COMPUTER_MARKER;
-    // console.log(`square to defend is ${squareToDefend}`);
   } else if (board['5'] === INITIAL_MARKER)  {
     board['5'] = COMPUTER_MARKER;
-    // console.log(`computer chooses square 5`);
   } else if (squareToTwoInLine) {
     board[squareToTwoInLine] = COMPUTER_MARKER;
-    // console.log(`computer tries getting two in line by going to ${squareToTwoInLine}`);
   } else {
     let randomIndex = getRandomIndex(emptySquares(board));
     let randomSquare = emptySquares(board)[randomIndex];
     board[randomSquare] = COMPUTER_MARKER;
-    // console.log(`computer chooses random square which is ${randomSquare}`);
   }
 }
 
