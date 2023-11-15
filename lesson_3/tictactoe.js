@@ -9,13 +9,6 @@ If neither player won and the board is not full, go to #2
 Play again?
 If yes, go to #1
 Goodbye!
-
-Keeping score
-A match is 2 or more games
-A match is won when someone wins 5 games
-A global var for the # of games needed to win is okay but but no other global vars
----Not sure how to do this without a global variable.
----If I set a local variable in a function and initialize it to 0 won't it constantly be reset to 0 every time the function is called?
 */
 
 const readline = require('readline-sync');
@@ -28,6 +21,37 @@ const WINNING_LINES = [
   [1, 4, 7], [2, 5, 8], [3, 6, 9],
   [1, 5, 9], [3, 5, 7]
 ];
+
+while (true) {
+  let board = initializeBoard();
+  let getsFirstTurn = checkFirstTurn();
+
+  displayBoard(board);
+  playGame(board, getsFirstTurn);
+  outputResults(board);
+
+  if (!playAgain()) {
+    console.log('Thank you for playing. Goodbye');
+    break;
+  }
+}
+
+function checkFirstTurn() {
+  let getsFirstTurn;
+
+  switch (FIRST_TURN) {
+    case 'choose':
+      getsFirstTurn = chooseFirstTurn();
+      break;
+    case 'human':
+      getsFirstTurn = 'human';
+      break;
+    case 'computer':
+      getsFirstTurn = 'computer';
+  }
+
+  return getsFirstTurn;
+}
 
 function chooseFirstTurn() {
   let getsFirstTurn;
@@ -51,31 +75,6 @@ function chooseFirstTurn() {
   }
 
   return getsFirstTurn;
-}
-
-while (true) {
-  let board = initializeBoard();
-  let getsFirstTurn;
-
-  switch (FIRST_TURN) {
-    case 'choose':
-      getsFirstTurn = chooseFirstTurn();
-      break;
-    case 'human':
-      getsFirstTurn = 'human';
-      break;
-    case 'computer':
-      getsFirstTurn = 'computer';
-  }
-
-  displayBoard(board);
-  playGame(board, getsFirstTurn);
-  outputResults(board);
-
-  if (!playAgain()) {
-    console.log('Thank you for playing. Goodbye');
-    break;
-  }
 }
 
 function playGame(board, getsFirstTurn) {
