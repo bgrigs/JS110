@@ -16,23 +16,91 @@ const INITIAL_MARKER = ' ';
 const HUMAN_MARKER = 'X';
 const COMPUTER_MARKER = 'O';
 const FIRST_TURN = 'choose';
+const MATCH_ROUNDS = 3;
 const WINNING_LINES = [
   [1, 2, 3], [4, 5, 6], [7, 8, 9],
   [1, 4, 7], [2, 5, 8], [3, 6, 9],
   [1, 5, 9], [3, 5, 7]
 ];
 
-while (true) {
+console.log('Welcome to Tic Tac Toe');
+displayLineBreak();
+startMatch();
+
+function startMatch() {
+  let round = 1;
+  let wins = initializeScore();
+
+  console.log(`You are ${HUMAN_MARKER}. Computer is ${COMPUTER_MARKER}`);
+  displayLineBreak();
+  console.log('A match of 3 rounds has begun!');
+  displayLineBreak();
+  playMatch(wins, round);
+}
+
+function playMatch(wins, round) {
+  while (true) {
+    displayScoreAndRound(wins, round);
+
+    if (round <= MATCH_ROUNDS) {
+      playRound(wins);
+      round += 1;
+    }
+
+    if (round > MATCH_ROUNDS) {
+      outputResults(wins, 'match');
+      console.log("Would you like to start a new match? (Enter y or n)");
+      if (!playAgain()) {
+        console.log('Thank you for playing. Goodbye');
+        break;
+      } else {
+        startMatch();
+      }
+
+      break;
+    }
+  }
+}
+
+function displayScoreAndRound(wins, round) {
+  console.log(`Score-card
+    -Computer wins: ${wins['computer']} 
+    -Human wins: ${wins['human']}
+  
+*** Round ${round} ***
+`);
+}
+
+function playRound(wins) {
   let board = initializeBoard();
   let getsFirstTurn = checkFirstTurn();
-
   displayBoard(board);
   playGame(board, getsFirstTurn);
-  outputResults(board);
+  keepScore(detectRoundWinner(WINNING_LINES, board), wins);
+  outputResults(board, 'round');
+}
 
-  if (!playAgain()) {
-    console.log('Thank you for playing. Goodbye');
-    break;
+function initializeScore() {
+  let wins = {
+    computer: 0,
+    human: 0
+  };
+
+  return wins;
+}
+
+
+function keepScore(winner, wins) {
+  while (true) {
+    if (winner === null) break;
+
+    if (winner.toLowerCase() === 'computer') {
+      wins['computer'] += 1;
+      break;
+    } else if (winner.toLowerCase() === 'you') {
+      wins['human'] += 1;
+      break;
+    }
   }
 }
 
@@ -55,7 +123,7 @@ function checkFirstTurn() {
 
 function chooseFirstTurn() {
   let getsFirstTurn;
-  console.log("Welcome to Tic Tac Toe. Enter 1 if you'd like to go first. Enter 2 if you'd like the computer to go first.");
+  console.log("Enter 1 if you'd like to go first. Enter 2 if you'd like the computer to go first.");
   let answer = readline.prompt().trim();
   let acceptedAnswers = ['1', '2'];
 
@@ -100,20 +168,22 @@ function playGame(board, getsFirstTurn) {
 
 function gameOver(board) {
   displayBoard(board);
-  return someoneWon(board) || boardFull(board);
+  return someoneWonRound(board) || boardFull(board);
 }
 
-function outputResults(board) {
-  if (someoneWon(board)) {
-    console.log(`${detectWinner(WINNING_LINES, board)} won!`);
+function outputResults(boardOrWins, roundOrMatch) {
+  if (roundOrMatch === 'round' && someoneWonRound(boardOrWins)) {
+    console.log(`${detectRoundWinner(WINNING_LINES, boardOrWins)} won the ${roundOrMatch}!`);
+  } else if (roundOrMatch === 'match' && someoneWonMatch(boardOrWins)) {
+    console.log(`${detectMatchWinner(boardOrWins)} won the ${roundOrMatch}!`);
   } else {
-    console.log("It's a tie.");
+    console.log(`The ${roundOrMatch} is tied.`);
   }
+
+  displayLineBreak();
 }
 
 function playAgain() {
-  console.log('Would you like to play again? (Enter y or n)');
-
   let answer = readline.prompt().toLowerCase().trim();
   let acceptedAnswers = ['y', 'yes', 'n', 'no'];
 
@@ -142,9 +212,8 @@ function initializeBoard() {
 
 function displayBoard(board) {
   console.clear();
-  console.log(`You are ${HUMAN_MARKER}. Computer is ${COMPUTER_MARKER}`);
 
-  console.log("");
+  displayLineBreak();
   console.log('     |     |     ');
   console.log(`  ${board['1']}  |  ${board['2']}  |  ${board['3']}  `);
   console.log('     |     |     ');
@@ -156,6 +225,7 @@ function displayBoard(board) {
   console.log('     |     |     ');
   console.log(`  ${board['7']}  |  ${board['8']}  |  ${board['9']}  `);
   console.log('     |     |     ');
+  displayLineBreak();
 }
 
 function emptySquares(board) {
@@ -240,14 +310,28 @@ function getRandomIndex(arr) {
   return Math.floor(Math.random() * arr.length);
 }
 
-function someoneWon(board) {
-  return !!detectWinner(WINNING_LINES, board);
+function someoneWonRound(board) {
+  return !!detectRoundWinner(WINNING_LINES, board);
 }
 
-function detectWinner(WINNING_LINES, board) {
+function someoneWonMatch(wins) {
+  return !!detectMatchWinner(wins);
+}
+
+function detectRoundWinner(WINNING_LINES, board) {
   for (let line = 0; line < WINNING_LINES.length; line += 1) {
     if (WINNING_LINES[line].every(square => board[square] === 'X')) return 'You';
     if (WINNING_LINES[line].every(square => board[square] === 'O')) return 'Computer';
+  }
+
+  return null;
+}
+
+function detectMatchWinner (wins) {
+  if (wins['computer'] > wins['human']) {
+    return 'Computer';
+  } else if (wins['computer'] < wins['human']) {
+    return 'You';
   }
 
   return null;
@@ -265,4 +349,9 @@ function joinOr(arr, punctuation = ', ', word = 'or') {
       return arr.slice(0, arr.length - 1).join(`${punctuation}`) +
             ` ${word} ${arr[arr.length - 1]}`;
   }
+}
+
+
+function displayLineBreak() {
+  console.log("");
 }
