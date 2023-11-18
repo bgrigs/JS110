@@ -15,6 +15,7 @@ const readline = require('readline-sync');
 const INITIAL_MARKER = ' ';
 const HUMAN_MARKER = 'X';
 const COMPUTER_MARKER = 'O';
+const COMPUTER_NAME = 'Computer';
 const FIRST_TURN = 'choose';
 const MATCH_ROUNDS = 3;
 const WINNING_LINES = [
@@ -24,6 +25,9 @@ const WINNING_LINES = [
 ];
 
 console.log('Welcome to Tic Tac Toe');
+console.log('What is your first name?');
+let humanName = readline.prompt().trim();
+
 displayLineBreak();
 startMatch();
 
@@ -31,7 +35,7 @@ function startMatch() {
   let round = 1;
   let wins = initializeScore();
 
-  console.log(`You are ${HUMAN_MARKER}. Computer is ${COMPUTER_MARKER}`);
+  console.log(`${humanName} is ${HUMAN_MARKER}. ${COMPUTER_NAME} is ${COMPUTER_MARKER}`);
   displayLineBreak();
   console.log('A match of 3 rounds has begun!');
   displayLineBreak();
@@ -64,8 +68,8 @@ function playMatch(wins, round) {
 
 function displayScoreAndRound(wins, round) {
   console.log(`Score-card
-    -Computer wins: ${wins['computer']} 
-    -Human wins: ${wins['human']}
+    -${COMPUTER_NAME}: ${wins['computer']} 
+    -${humanName}: ${wins['human']}
   
 *** Round ${round} ***
 `);
@@ -94,10 +98,10 @@ function keepScore(winner, wins) {
   while (true) {
     if (winner === null) break;
 
-    if (winner.toLowerCase() === 'computer') {
+    if (winner === COMPUTER_NAME) {
       wins['computer'] += 1;
       break;
-    } else if (winner.toLowerCase() === 'you') {
+    } else if (winner === humanName) {
       wins['human'] += 1;
       break;
     }
@@ -320,8 +324,8 @@ function someoneWonMatch(wins) {
 
 function detectRoundWinner(WINNING_LINES, board) {
   for (let line = 0; line < WINNING_LINES.length; line += 1) {
-    if (WINNING_LINES[line].every(square => board[square] === 'X')) return 'You';
-    if (WINNING_LINES[line].every(square => board[square] === 'O')) return 'Computer';
+    if (WINNING_LINES[line].every(square => board[square] === 'X')) return humanName;
+    if (WINNING_LINES[line].every(square => board[square] === 'O')) return COMPUTER_NAME;
   }
 
   return null;
@@ -329,9 +333,9 @@ function detectRoundWinner(WINNING_LINES, board) {
 
 function detectMatchWinner (wins) {
   if (wins['computer'] > wins['human']) {
-    return 'Computer';
+    return COMPUTER_NAME;
   } else if (wins['computer'] < wins['human']) {
-    return 'You';
+    return humanName;
   }
 
   return null;
