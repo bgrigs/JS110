@@ -24,49 +24,67 @@ const WINNING_LINES = [
   [1, 5, 9], [3, 5, 7]
 ];
 
-console.log('Welcome to Tic Tac Toe');
-console.log('What is your first name?');
-let humanName = readline.prompt().trim();
+while (true) {
+  console.log('Welcome to Tic Tac Toe');
+  let humanName = getName();
+  displayLineBreak();
+  startMatch(humanName);
+  break;
+}
 
-displayLineBreak();
-startMatch();
+function getName() {
+  console.log('What is your first name?');
+  let humanName = readline.prompt().trim();
 
-function startMatch() {
-  let round = 1;
-  let wins = initializeScore();
+  while (true) {
+    if (humanName !== '') {
+      break;
+    } else {
+      console.log('That is an invalid response. Please enter your name');
+      humanName = readline.prompt().trim();
+    }
+  }
+
+  return humanName;
+}
+
+function startMatch(humanName) {
+  let wins =  {
+    computer: 0,
+    human: 0
+  };
 
   console.log(`${humanName} is ${HUMAN_MARKER}. ${COMPUTER_NAME} is ${COMPUTER_MARKER}`);
   displayLineBreak();
-  console.log('A match of 3 rounds has begun!');
+  console.log(`A match of ${MATCH_ROUNDS} rounds has begun!`);
   displayLineBreak();
-  playMatch(wins, round);
+  playMatch(wins, humanName);
 }
 
-function playMatch(wins, round) {
+function playMatch(wins, humanName) {
+  let round = 1;
   while (true) {
-    displayScoreAndRound(wins, round);
+    displayScoreAndRound(wins, round, humanName);
 
     if (round <= MATCH_ROUNDS) {
-      playRound(wins);
+      playRound(wins, humanName);
       round += 1;
     }
 
     if (round > MATCH_ROUNDS) {
-      outputResults(wins, 'match');
+      outputResults(wins, 'match', humanName);
       console.log("Would you like to start a new match? (Enter y or n)");
       if (!playAgain()) {
         console.log('Thank you for playing. Goodbye');
         break;
-      } else {
-        startMatch();
-      }
+      } else startMatch(humanName);
 
       break;
     }
   }
 }
 
-function displayScoreAndRound(wins, round) {
+function displayScoreAndRound(wins, round, humanName) {
   console.log(`Score-card
     -${COMPUTER_NAME}: ${wins['computer']} 
     -${humanName}: ${wins['human']}
@@ -75,26 +93,17 @@ function displayScoreAndRound(wins, round) {
 `);
 }
 
-function playRound(wins) {
+function playRound(wins, humanName) {
   let board = initializeBoard();
   let getsFirstTurn = checkFirstTurn();
   displayBoard(board);
-  playGame(board, getsFirstTurn);
-  keepScore(detectRoundWinner(WINNING_LINES, board), wins);
-  outputResults(board, 'round');
-}
-
-function initializeScore() {
-  let wins = {
-    computer: 0,
-    human: 0
-  };
-
-  return wins;
+  playGame(board, getsFirstTurn, humanName);
+  keepScore(detectRoundWinner(WINNING_LINES, board, humanName), wins, humanName);
+  outputResults(board, 'round', humanName);
 }
 
 
-function keepScore(winner, wins) {
+function keepScore(winner, wins, humanName) {
   while (true) {
     if (winner === null) break;
 
@@ -149,7 +158,7 @@ function chooseFirstTurn() {
   return getsFirstTurn;
 }
 
-function playGame(board, getsFirstTurn) {
+function playGame(board, getsFirstTurn, humanName) {
   let firstPlayer;
   let secondPlayer;
 
@@ -163,23 +172,23 @@ function playGame(board, getsFirstTurn) {
 
   while (true) {
     firstPlayer();
-    if (gameOver(board)) break;
+    if (gameOver(board, humanName)) break;
 
     secondPlayer();
-    if (gameOver(board)) break;
+    if (gameOver(board, humanName)) break;
   }
 }
 
-function gameOver(board) {
+function gameOver(board, humanName) {
   displayBoard(board);
-  return someoneWonRound(board) || boardFull(board);
+  return someoneWonRound(board, humanName) || boardFull(board);
 }
 
-function outputResults(boardOrWins, roundOrMatch) {
-  if (roundOrMatch === 'round' && someoneWonRound(boardOrWins)) {
-    console.log(`${detectRoundWinner(WINNING_LINES, boardOrWins)} won the ${roundOrMatch}!`);
-  } else if (roundOrMatch === 'match' && someoneWonMatch(boardOrWins)) {
-    console.log(`${detectMatchWinner(boardOrWins)} won the ${roundOrMatch}!`);
+function outputResults(boardOrWins, roundOrMatch, humanName) {
+  if (roundOrMatch === 'round' && someoneWonRound(boardOrWins, humanName)) {
+    console.log(`${detectRoundWinner(WINNING_LINES, boardOrWins, humanName)} won the ${roundOrMatch}!`);
+  } else if (roundOrMatch === 'match' && someoneWonMatch(boardOrWins, humanName)) {
+    console.log(`${detectMatchWinner(boardOrWins, humanName)} won the ${roundOrMatch}!`);
   } else {
     console.log(`The ${roundOrMatch} is tied.`);
   }
@@ -314,15 +323,15 @@ function getRandomIndex(arr) {
   return Math.floor(Math.random() * arr.length);
 }
 
-function someoneWonRound(board) {
-  return !!detectRoundWinner(WINNING_LINES, board);
+function someoneWonRound(board, humanName) {
+  return !!detectRoundWinner(WINNING_LINES, board, humanName);
 }
 
-function someoneWonMatch(wins) {
-  return !!detectMatchWinner(wins);
+function someoneWonMatch(wins, humanName) {
+  return !!detectMatchWinner(wins, humanName);
 }
 
-function detectRoundWinner(WINNING_LINES, board) {
+function detectRoundWinner(WINNING_LINES, board, humanName) {
   for (let line = 0; line < WINNING_LINES.length; line += 1) {
     if (WINNING_LINES[line].every(square => board[square] === 'X')) return humanName;
     if (WINNING_LINES[line].every(square => board[square] === 'O')) return COMPUTER_NAME;
@@ -331,7 +340,7 @@ function detectRoundWinner(WINNING_LINES, board) {
   return null;
 }
 
-function detectMatchWinner (wins) {
+function detectMatchWinner (wins, humanName) {
   if (wins['computer'] > wins['human']) {
     return COMPUTER_NAME;
   } else if (wins['computer'] < wins['human']) {
@@ -354,7 +363,6 @@ function joinOr(arr, punctuation = ', ', word = 'or') {
             ` ${word} ${arr[arr.length - 1]}`;
   }
 }
-
 
 function displayLineBreak() {
   console.log("");
