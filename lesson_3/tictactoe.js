@@ -16,7 +16,6 @@ const INITIAL_MARKER = ' ';
 const HUMAN_MARKER = 'X';
 const COMPUTER_MARKER = 'O';
 const COMPUTER_NAME = 'Computer';
-const FIRST_TURN = 'choose';
 const MATCH_ROUNDS = 3;
 const WINNING_LINES = [
   [1, 2, 3], [4, 5, 6], [7, 8, 9],
@@ -28,9 +27,12 @@ while (true) {
   console.log('Welcome to Tic Tac Toe');
   let humanName = getName();
   displayLineBreak();
-  startMatch(humanName);
+  let getsFirstTurn = chooseFirstTurn();
+  startMatch(humanName, getsFirstTurn);
   break;
 }
+
+console.log('Thank you for playing. Goodbye');
 
 function getName() {
   console.log('What is your first name?');
@@ -48,7 +50,7 @@ function getName() {
   return humanName;
 }
 
-function startMatch(humanName) {
+function startMatch(humanName, getsFirstTurn) {
   let wins =  {
     computer: 0,
     human: 0
@@ -58,48 +60,48 @@ function startMatch(humanName) {
   displayLineBreak();
   console.log(`A match of ${MATCH_ROUNDS} rounds has begun!`);
   displayLineBreak();
-  playMatch(wins, humanName);
+  playMatch(wins, humanName, getsFirstTurn);
 }
 
-function playMatch(wins, humanName) {
+function playMatch(wins, humanName, getsFirstTurn) {
   let round = 1;
-  while (true) {
-    displayScoreAndRound(wins, round, humanName);
 
+  while (true) {
     if (round <= MATCH_ROUNDS) {
-      playRound(wins, humanName);
+      playRound(wins, humanName, getsFirstTurn, round);
+      displayScore(wins, humanName);
       round += 1;
+      if (round > MATCH_ROUNDS) continue;
+      if (!playAgain('round')) break;
     }
 
     if (round > MATCH_ROUNDS) {
-      outputResults(wins, 'match', humanName);
-      console.log("Would you like to start a new match? (Enter y or n)");
-      if (!playAgain()) {
-        console.log('Thank you for playing. Goodbye');
+      outputResults(undefined, wins, 'match', humanName);
+      if (!playAgain('match')) {
         break;
-      } else startMatch(humanName);
+      } else startMatch(humanName, chooseFirstTurn());
 
       break;
     }
   }
 }
 
-function displayScoreAndRound(wins, round, humanName) {
+function displayScore(wins, humanName) {
   console.log(`Score-card
     -${COMPUTER_NAME}: ${wins['computer']} 
-    -${humanName}: ${wins['human']}
-  
-*** Round ${round} ***
-`);
+    -${humanName}: ${wins['human']}`);
+  displayLineBreak();
 }
 
-function playRound(wins, humanName) {
+function displayRound(round) {
+  console.log(`*** Round ${round} ***`);
+}
+
+function playRound(wins, humanName, getsFirstTurn, round) {
   let board = initializeBoard();
-  let getsFirstTurn = checkFirstTurn();
-  displayBoard(board);
-  playGame(board, getsFirstTurn, humanName);
+  playGame(board, getsFirstTurn, humanName, round);
   keepScore(detectRoundWinner(WINNING_LINES, board, humanName), wins, humanName);
-  outputResults(board, 'round', humanName);
+  outputResults(board, undefined, 'round', humanName);
 }
 
 
@@ -115,23 +117,6 @@ function keepScore(winner, wins, humanName) {
       break;
     }
   }
-}
-
-function checkFirstTurn() {
-  let getsFirstTurn;
-
-  switch (FIRST_TURN) {
-    case 'choose':
-      getsFirstTurn = chooseFirstTurn();
-      break;
-    case 'human':
-      getsFirstTurn = 'human';
-      break;
-    case 'computer':
-      getsFirstTurn = 'computer';
-  }
-
-  return getsFirstTurn;
 }
 
 function chooseFirstTurn() {
@@ -158,11 +143,12 @@ function chooseFirstTurn() {
   return getsFirstTurn;
 }
 
-function playGame(board, getsFirstTurn, humanName) {
+function playGame(board, getsFirstTurn, humanName, round) {
   let firstPlayer;
   let secondPlayer;
 
   if (getsFirstTurn === 'human') {
+    displayBoard(board, round);
     firstPlayer = () => humanChoosesSquare(board);
     secondPlayer = () => computerChoosesStrategy(board);
   } else if (getsFirstTurn === 'computer') {
@@ -172,23 +158,24 @@ function playGame(board, getsFirstTurn, humanName) {
 
   while (true) {
     firstPlayer();
-    if (gameOver(board, humanName)) break;
+    if (gameOver(board, humanName, round)) break;
 
     secondPlayer();
-    if (gameOver(board, humanName)) break;
+    if (gameOver(board, humanName, round)) break;
   }
 }
 
-function gameOver(board, humanName) {
-  displayBoard(board);
+function gameOver(board, humanName, round) {
+  displayBoard(board, round);
   return someoneWonRound(board, humanName) || boardFull(board);
 }
 
-function outputResults(boardOrWins, roundOrMatch, humanName) {
-  if (roundOrMatch === 'round' && someoneWonRound(boardOrWins, humanName)) {
-    console.log(`${detectRoundWinner(WINNING_LINES, boardOrWins, humanName)} won the ${roundOrMatch}!`);
-  } else if (roundOrMatch === 'match' && someoneWonMatch(boardOrWins, humanName)) {
-    console.log(`${detectMatchWinner(boardOrWins, humanName)} won the ${roundOrMatch}!`);
+function outputResults(board, wins, roundOrMatch, humanName) {
+  if (roundOrMatch === 'round' && someoneWonRound(board, humanName)) {
+    console.log(`${detectRoundWinner(WINNING_LINES, board, humanName)} won the ${roundOrMatch}!`);
+  } else if (roundOrMatch === 'match' && someoneWonMatch(wins, humanName)) {
+    displayLineBreak();
+    console.log(`${detectMatchWinner(wins, humanName)} won the ${roundOrMatch}!`);
   } else {
     console.log(`The ${roundOrMatch} is tied.`);
   }
@@ -196,7 +183,8 @@ function outputResults(boardOrWins, roundOrMatch, humanName) {
   displayLineBreak();
 }
 
-function playAgain() {
+function playAgain(roundOrMatch) {
+  console.log(`Would you like to start a new ${roundOrMatch}? (Enter y or n)`);
   let answer = readline.prompt().toLowerCase().trim();
   let acceptedAnswers = ['y', 'yes', 'n', 'no'];
 
@@ -223,8 +211,8 @@ function initializeBoard() {
   return board;
 }
 
-function displayBoard(board) {
-  console.clear();
+function displayBoard(board, round) {
+  displayRound(round);
 
   displayLineBreak();
   console.log('     |     |     ');
@@ -297,6 +285,8 @@ function computerChoosesSquare(squareToWin, squareToDefend, squareToTwoInLine, b
     let randomSquare = emptySquares(board)[randomIndex];
     board[randomSquare] = COMPUTER_MARKER;
   }
+
+  console.clear();
 }
 
 function twoInLineAI(markersInLine, player) {
