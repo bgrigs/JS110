@@ -125,13 +125,9 @@ function chooseFirstTurn() {
   let answer = readline.prompt().trim();
   let acceptedAnswers = ['1', '2'];
 
-  while (true) {
-    if (acceptedAnswers.includes(answer)) {
-      break;
-    } else {
-      console.log('That is an invalid response. Please enter 1 or 2');
-      answer = readline.prompt().trim();
-    }
+  while (!acceptedAnswers.includes(answer)) {
+    console.log('That is an invalid response. Please enter 1 or 2');
+    answer = readline.prompt().trim();
   }
 
   if (answer === '1') {
@@ -289,14 +285,18 @@ function computerChoosesSquare(squareToWin, squareToDefend, squareToTwoInLine, b
   console.clear();
 }
 
+function filterMarkersInLine(markersInLine, player) {
+  return markersInLine.filter(marker => marker === player);
+}
+
 function twoInLineAI(markersInLine, player) {
-  return markersInLine.filter(marker => marker === player).length === 2 &&
+  return filterMarkersInLine(markersInLine, player).length === 2 &&
          markersInLine.includes(INITIAL_MARKER);
 }
 
 function oneInLineAI(markersInLine) {
-  return markersInLine.filter(marker => marker === COMPUTER_MARKER).length === 1 &&
-         markersInLine.filter(marker => marker === INITIAL_MARKER).length === 2;
+  return filterMarkersInLine(markersInLine, COMPUTER_MARKER).length === 1 &&
+         filterMarkersInLine(markersInLine, HUMAN_MARKER).length === 2;
 }
 
 function findAtRiskSquareAI(line, board) {
