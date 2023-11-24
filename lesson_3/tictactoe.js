@@ -71,17 +71,17 @@ function playMatch(wins, humanName, getsFirstTurn) {
       playRound(wins, humanName, getsFirstTurn, round);
       displayScore(wins, humanName);
       round += 1;
-      if (round > MATCH_ROUNDS) continue;
-      if (!playAgain('round')) break;
+      if (round > MATCH_ROUNDS || playAgain('round')) continue;
+      if (playAgain('match')) {
+        startMatch(humanName, chooseFirstTurn());
+      } else break;
     }
 
     if (round > MATCH_ROUNDS) {
       outputResults(undefined, wins, 'match', humanName);
-      if (!playAgain('match')) {
-        break;
-      } else startMatch(humanName, chooseFirstTurn());
-
-      break;
+      if (playAgain('match')) {
+        startMatch(humanName, chooseFirstTurn());
+      } else break;
     }
   }
 }
@@ -129,6 +129,7 @@ function chooseFirstTurn() {
     console.log('That is an invalid response. Please enter 1 or 2');
     answer = readline.prompt().trim();
   }
+
 
   if (answer === '1') {
     getsFirstTurn = 'human';
