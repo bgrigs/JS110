@@ -16,7 +16,7 @@ const INITIAL_MARKER = ' ';
 const HUMAN_MARKER = 'X';
 const COMPUTER_MARKER = 'O';
 const COMPUTER_NAME = 'Computer';
-const MATCH_ROUNDS = 2;
+const MATCH_ROUNDS = 3;
 const WINNING_LINES = [
   [1, 2, 3], [4, 5, 6], [7, 8, 9],
   [1, 4, 7], [2, 5, 8], [3, 6, 9],
@@ -27,8 +27,8 @@ while (true) {
   console.log('Welcome to Tic Tac Toe');
   let humanName = getName();
   displayLineBreak();
-  let getsFirstTurn = chooseFirstTurn();
-  startMatch(humanName, getsFirstTurn);
+  let getsFirstRoundTurn = chooseFirstTurn();
+  startMatch(humanName, getsFirstRoundTurn);
   break;
 }
 
@@ -50,7 +50,7 @@ function getName() {
   return humanName;
 }
 
-function startMatch(humanName, getsFirstTurn) {
+function startMatch(humanName, getsFirstRoundTurn) {
   let round = 1;
   let wins =  {
     computer: 0,
@@ -61,15 +61,15 @@ function startMatch(humanName, getsFirstTurn) {
   displayLineBreak();
   console.log(`A match of ${MATCH_ROUNDS} rounds has begun!`);
   displayLineBreak();
-  playMatch(wins, humanName, getsFirstTurn, round);
+  playMatch(wins, humanName, getsFirstRoundTurn, round);
 }
 
-function playMatch(wins, humanName, getsFirstTurn) {
+function playMatch(wins, humanName, getsFirstRoundTurn) {
   let round = 1;
 
   while (true) {
     if (round <= MATCH_ROUNDS) {
-      playRound(wins, humanName, getsFirstTurn, round);
+      playRound(wins, humanName, getsFirstRoundTurn, round);
       displayScore(wins, humanName);
       round += 1;
       if (round > MATCH_ROUNDS || playAgain('round')) continue;
@@ -105,9 +105,9 @@ function displayRound(round) {
   console.log(`*** Round ${round} ***`);
 }
 
-function playRound(wins, humanName, getsFirstTurn, round) {
+function playRound(wins, humanName, getsFirstRoundTurn, round) {
   let board = initializeBoard();
-  playGame(board, getsFirstTurn, humanName, round);
+  playGame(board, getsFirstRoundTurn, humanName, round);
   keepScore(detectRoundWinner(WINNING_LINES, board, humanName), wins, humanName);
   outputResults(board, undefined, 'round', humanName);
 }
@@ -128,7 +128,7 @@ function keepScore(winner, wins, humanName) {
 }
 
 function chooseFirstTurn() {
-  let getsFirstTurn;
+  let getsFirstRoundTurn;
   console.log("Enter 1 if you'd like to go first. Enter 2 if you'd like the computer to go first.");
   let answer = readline.prompt().trim();
   let acceptedAnswers = ['1', '2'];
@@ -140,33 +140,54 @@ function chooseFirstTurn() {
 
 
   if (answer === '1') {
-    getsFirstTurn = 'human';
+    getsFirstRoundTurn = 'human';
   } else if (answer === '2') {
-    getsFirstTurn = 'computer';
+    getsFirstRoundTurn = 'computer';
   }
 
-  return getsFirstTurn;
+  return getsFirstRoundTurn;
 }
 
-function playGame(board, getsFirstTurn, humanName, round) {
-  let firstPlayer;
-  let secondPlayer;
+function playGame(board, getsFirstRoundTurn, humanName, round) {
+  let roundTurn = {
+    firstPlayer: undefined,
+    secondPlayer: undefined,
+  };
 
-  if (getsFirstTurn === 'human') {
-    displayBoard(board, round);
-    firstPlayer = () => humanChoosesSquare(board);
-    secondPlayer = () => computerChoosesStrategy(board);
-  } else if (getsFirstTurn === 'computer') {
-    firstPlayer = () =>  computerChoosesStrategy(board);
-    secondPlayer = () => humanChoosesSquare(board);
+  if (round % 2 === 1) {
+    oddRound(getsFirstRoundTurn, roundTurn, board, round);
+  } else {
+    evenRound(getsFirstRoundTurn, roundTurn, board, round);
   }
 
   while (true) {
-    firstPlayer();
+    roundTurn.firstPlayer();
     if (roundOver(board, humanName, round)) break;
 
-    secondPlayer();
+    roundTurn.secondPlayer();
     if (roundOver(board, humanName, round)) break;
+  }
+}
+
+function oddRound(getsFirstRoundTurn, roundTurn, board, round) {
+  if (getsFirstRoundTurn === 'human') {
+    displayBoard(board, round);
+    roundTurn.firstPlayer = () => humanChoosesSquare(board);
+    roundTurn.secondPlayer = () => computerChoosesStrategy(board);
+  } else if (getsFirstRoundTurn  === 'computer') {
+    roundTurn.firstPlayer = () =>  computerChoosesStrategy(board);
+    roundTurn.secondPlayer = () => humanChoosesSquare(board);
+  }
+}
+
+function evenRound(getsFirstRoundTurn, roundTurn, board, round) {
+  if (getsFirstRoundTurn  === 'human') {
+    roundTurn.firstPlayer = () => computerChoosesStrategy(board);
+    roundTurn.secondPlayer = () => humanChoosesSquare(board);
+  } else if (getsFirstRoundTurn  === 'computer') {
+    displayBoard(board, round);
+    roundTurn.firstPlayer = () =>  humanChoosesSquare(board);
+    roundTurn.secondPlayer = () => computerChoosesStrategy(board);
   }
 }
 
@@ -217,6 +238,7 @@ function initializeBoard() {
 }
 
 function displayBoard(board, round) {
+  console.clear();
   displayRound(round);
 
   displayLineBreak();
