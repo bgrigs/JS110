@@ -16,7 +16,7 @@ const INITIAL_MARKER = ' ';
 const HUMAN_MARKER = 'X';
 const COMPUTER_MARKER = 'O';
 const COMPUTER_NAME = 'Computer';
-const MATCH_ROUNDS = 3;
+const MATCH_ROUNDS = 2;
 const WINNING_LINES = [
   [1, 2, 3], [4, 5, 6], [7, 8, 9],
   [1, 4, 7], [2, 5, 8], [3, 6, 9],
@@ -51,6 +51,7 @@ function getName() {
 }
 
 function startMatch(humanName, getsFirstTurn) {
+  let round = 1;
   let wins =  {
     computer: 0,
     human: 0
@@ -60,7 +61,7 @@ function startMatch(humanName, getsFirstTurn) {
   displayLineBreak();
   console.log(`A match of ${MATCH_ROUNDS} rounds has begun!`);
   displayLineBreak();
-  playMatch(wins, humanName, getsFirstTurn);
+  playMatch(wins, humanName, getsFirstTurn, round);
 }
 
 function playMatch(wins, humanName, getsFirstTurn) {
@@ -72,18 +73,25 @@ function playMatch(wins, humanName, getsFirstTurn) {
       displayScore(wins, humanName);
       round += 1;
       if (round > MATCH_ROUNDS || playAgain('round')) continue;
-      if (playAgain('match')) {
-        startMatch(humanName, chooseFirstTurn());
-      } else break;
+      if (playNewMatch(humanName)) continue;
+      break;
     }
 
     if (round > MATCH_ROUNDS) {
       outputResults(undefined, wins, 'match', humanName);
-      if (playAgain('match')) {
-        startMatch(humanName, chooseFirstTurn());
-      } else break;
+      if (playNewMatch(humanName)) continue;
+      break;
     }
+    break;
   }
+}
+
+function playNewMatch(humanName) {
+  if (!playAgain('match')) {
+    return false;
+  }
+
+  return startMatch(humanName, chooseFirstTurn());
 }
 
 function displayScore(wins, humanName) {
@@ -155,14 +163,14 @@ function playGame(board, getsFirstTurn, humanName, round) {
 
   while (true) {
     firstPlayer();
-    if (gameOver(board, humanName, round)) break;
+    if (roundOver(board, humanName, round)) break;
 
     secondPlayer();
-    if (gameOver(board, humanName, round)) break;
+    if (roundOver(board, humanName, round)) break;
   }
 }
 
-function gameOver(board, humanName, round) {
+function roundOver(board, humanName, round) {
   displayBoard(board, round);
   return someoneWonRound(board, humanName) || boardFull(board);
 }
