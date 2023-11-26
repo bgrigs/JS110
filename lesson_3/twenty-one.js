@@ -20,13 +20,15 @@
 
 */
 
-// console.log(`${deck[randomSuit][1][randomCard]} of ${deck[randomSuit][0]}`);
 const readline = require('readline-sync');
+const PLAYER_NAME = 'Player';
+const DEALER_NAME = 'Dealer';
 const MAX_POINTS = 21;
 const CARDS_INITIAL_HAND = 2;
 const CARDS_HIT = 1;
 const WORTH_10 = ['J', 'Q', 'K'];
 
+console.clear();
 playGame();
 
 function playGame() {
@@ -39,33 +41,27 @@ function playGame() {
   let playerHandValue = () => countHandValue(playerCards);
   let dealerHandValue = () => countHandValue(dealerCards);
 
-  displayAllCards(playerCards, playerHandValue());
+  displayAllCards(PLAYER_NAME, playerCards, playerHandValue());
   displayDealerCard(dealerCards, dealerHandValue());
 
-  while (true) {
-    if (!playerTurn(playerHandValue, playerCards, deck)) break;
-    if (playerLost(playerHandValue)) break;
-    if (playerHandValue === MAX_POINTS) {
-      console.log('Player wins');
-      break;
-    }
-  }
+  playerTurn(playerHandValue, playerCards, deck);
 
-  while (true) {
-    if (!dealerTurn(dealerHandValue, dealerCards, deck)) break;
+  if (playerHandValue() === MAX_POINTS) {
+    console.log('Player wins');
+  } else if (!bust(playerHandValue)) {
+    dealerTurn(dealerHandValue, dealerCards, deck);
   }
-
 }
 
 function playerTurn(playerHandValue, playerCards, deck) {
   while (true) {
-    if (playerLost(playerHandValue)) {
+    if (bust(playerHandValue)) {
       console.log('Player has busted. Dealer wins');
       break;
     }
     if (playerHitOrStay() === 'hit') {
       hit(playerCards, deck);
-      displayAllCards(playerCards, playerHandValue());
+      displayAllCards(PLAYER_NAME, playerCards, playerHandValue());
     } else break;
   }
 
@@ -78,11 +74,12 @@ function dealerTurn(dealerHandValue, dealerCards, deck) {
       hit(dealerCards, deck);
     }
     if (dealerHandValue() > MAX_POINTS) {
+      displayAllCards(DEALER_NAME, dealerCards, dealerHandValue());
       console.log('dealer loses');
       break;
     }
     if (dealerHandValue() >= 17) {
-      console.log(dealerCards);
+      displayAllCards(DEALER_NAME, dealerCards, dealerHandValue());
       console.log(`dealer hand value is ${dealerHandValue()}`);
       break;
     }
@@ -91,8 +88,8 @@ function dealerTurn(dealerHandValue, dealerCards, deck) {
   return false;
 }
 
-function playerLost(playerHandValue) {
-  return playerHandValue() > 21;
+function bust(handValue) {
+  return handValue() > 21;
 }
 
 function playerHitOrStay() {
@@ -117,10 +114,8 @@ function hit(playerCards, deck) {
 }
 
 function countHandValue(hand) {
-  // console.log(`cards in hand: ${hand.length}`);
   let handValue = 0;
   let cardValues = hand.map(card => card[1][0]);
-  // console.log(cardValues);
 
   cardValues.forEach(value => {
     if (value === 'A') handValue += 11;
@@ -150,14 +145,11 @@ function initializeDeck() {
 function deal(playerCards, dealerCards, deck) {
   dealRandomCard(playerCards, CARDS_INITIAL_HAND, deck);
   dealRandomCard(dealerCards, CARDS_INITIAL_HAND, deck);
-
-  console.log(playerCards);
-  console.log(dealerCards);
 }
 
 
-function displayAllCards(hand, handValue) {
-  console.log(`Player has: `);
+function displayAllCards(dealerOrPlayer, hand, handValue) {
+  console.log(`${dealerOrPlayer} has: `);
   hand.forEach(card =>  console.log(`** ${card[1]} of ${card[0]}`));
   console.log(`** Hand value: ${handValue}`);
   displayLineBreak();
