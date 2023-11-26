@@ -18,15 +18,24 @@
 6. If dealer busts, player wins.
 7. Compare cards and declare winner.
 
+
+// Add:
+  - playAgain
+  - what happens in tie?
+  - check playerHandValue and if the arrow function needs to run as often as it currently does
+  - if player has 21, don't ask them to hit or stay
 */
 
 const readline = require('readline-sync');
 const PLAYER_NAME = 'Player';
 const DEALER_NAME = 'Dealer';
-const MAX_POINTS = 21;
+const GOAL_POINTS = 21;
 const CARDS_INITIAL_HAND = 2;
 const CARDS_HIT = 1;
 const WORTH_10 = ['J', 'Q', 'K'];
+const FACE_VALUE = 10;
+const ACE_VALUE = 11;
+const DEALER_MIN = 17;
 
 console.clear();
 playGame();
@@ -42,12 +51,37 @@ function playGame() {
   let dealerHandValue = () => countHandValue(dealerCards);
 
   displayAllCards(PLAYER_NAME, playerCards, playerHandValue());
-  displayDealerCard(dealerCards, dealerHandValue());
+  displayDealerCard(dealerCards);
 
   playerTurn(playerHandValue, playerCards, deck);
+  checkDealerTurn(playerHandValue, dealerHandValue, dealerCards, deck);
 
-  if (playerHandValue() === MAX_POINTS) {
-    console.log('Player wins');
+  if (playerHandValue() !== GOAL_POINTS
+      && !bust(playerHandValue)
+      && !bust(dealerHandValue)) {
+    console.clear();
+    revealFinalHands(playerCards, dealerCards, playerHandValue, dealerHandValue);
+    determineWinner(playerHandValue, dealerHandValue);
+  }
+}
+
+function revealFinalHands(playerCards, dealerCards, playerHandValue, dealerHandValue) {
+  displayAllCards(PLAYER_NAME, playerCards, playerHandValue());
+  displayAllCards(DEALER_NAME, dealerCards, dealerHandValue());
+}
+
+function determineWinner(playerHandValue, dealerHandValue) {
+  if (playerHandValue() > dealerHandValue()) {
+    outputWinner(PLAYER_NAME);
+  } else {
+    outputWinner(DEALER_NAME);
+  }
+}
+
+
+function checkDealerTurn(playerHandValue, dealerHandValue, dealerCards, deck) {
+  if (playerHandValue() === GOAL_POINTS) {
+    outputWinner(PLAYER_NAME);
   } else if (!bust(playerHandValue)) {
     dealerTurn(dealerHandValue, dealerCards, deck);
   }
@@ -56,11 +90,12 @@ function playGame() {
 function playerTurn(playerHandValue, playerCards, deck) {
   while (true) {
     if (bust(playerHandValue)) {
-      console.log('Player has busted. Dealer wins');
+      outputLoser(PLAYER_NAME, 'busted', DEALER_NAME);
       break;
     }
     if (playerHitOrStay() === 'hit') {
       hit(playerCards, deck);
+      console.clear();
       displayAllCards(PLAYER_NAME, playerCards, playerHandValue());
     } else break;
   }
@@ -69,18 +104,18 @@ function playerTurn(playerHandValue, playerCards, deck) {
 }
 
 function dealerTurn(dealerHandValue, dealerCards, deck) {
+  console.clear();
   while (true) {
-    if (dealerHandValue() < 17) {
+    if (dealerHandValue() < DEALER_MIN) {
       hit(dealerCards, deck);
     }
-    if (dealerHandValue() > MAX_POINTS) {
+    if (dealerHandValue() > GOAL_POINTS) {
       displayAllCards(DEALER_NAME, dealerCards, dealerHandValue());
-      console.log('dealer loses');
+      outputLoser(DEALER_NAME, 'busted', PLAYER_NAME);
       break;
     }
-    if (dealerHandValue() >= 17) {
-      displayAllCards(DEALER_NAME, dealerCards, dealerHandValue());
-      console.log(`dealer hand value is ${dealerHandValue()}`);
+    if (dealerHandValue() >= DEALER_MIN) {
+      // displayAllCards(DEALER_NAME, dealerCards, dealerHandValue());
       break;
     }
   }
@@ -118,8 +153,8 @@ function countHandValue(hand) {
   let cardValues = hand.map(card => card[1][0]);
 
   cardValues.forEach(value => {
-    if (value === 'A') handValue += 11;
-    if (WORTH_10.includes(value)) handValue += 10;
+    if (value === 'A') handValue += ACE_VALUE;
+    if (WORTH_10.includes(value)) handValue += FACE_VALUE;
     if (!isNaN(Number(value))) handValue += Number(value);
   });
 
@@ -155,11 +190,11 @@ function displayAllCards(dealerOrPlayer, hand, handValue) {
   displayLineBreak();
 }
 
-function displayDealerCard(dealerCards, dealerHandValue) {
+function displayDealerCard(dealerCards) {
   let card = dealerCards[0];
   console.log(`Dealer has: `);
   console.log(`** ${card[1]} of ${card[0]}`);
-  console.log(`** Hand value: ${dealerHandValue}`);
+  console.log(`** 1 hidden card`);
   displayLineBreak();
 }
 
@@ -182,4 +217,13 @@ function getRandomCardIndex(randomSuit, deck) {
 
 function displayLineBreak() {
   console.log('');
+}
+
+function outputWinner(winner) {
+  console.log(`🎉 ${winner} wins 🎉`);
+}
+
+function outputLoser(loser, lostOrBusted, winner) {
+  console.log(`👎 ${loser} has ${lostOrBusted} 
+🎉 ${winner} wins`);
 }
