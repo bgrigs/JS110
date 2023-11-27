@@ -20,7 +20,6 @@
 
 
 // Add:
-  - playAgain
   - what happens in tie?
   - check playerHandValue and if the arrow function needs to run as often as it currently does
   - if player has 21, don't ask them to hit or stay
@@ -37,8 +36,17 @@ const FACE_VALUE = 10;
 const ACE_VALUE = 11;
 const DEALER_MIN = 17;
 
-console.clear();
-playGame();
+console.log('Welcome to Twenty-One');
+
+while (true) {
+  console.clear();
+  playGame();
+  displayLineBreak();
+  if (!playAgain()) {
+    console.log('Thank you for playing Twenty-One. Goodbye.');
+    break;
+  }
+}
 
 function playGame() {
   let playerCards = [];
@@ -226,4 +234,22 @@ function outputWinner(winner) {
 function outputLoser(loser, lostOrBusted, winner) {
   console.log(`👎 ${loser} has ${lostOrBusted} 
 🎉 ${winner} wins`);
+}
+
+function playAgain() {
+  console.log(`Would you like to play again? (Enter y or n)`);
+  let answer = readline.prompt().toLowerCase().trim();
+  let acceptedAnswers = ['y', 'yes', 'n', 'no'];
+
+  while (true) {
+    if (acceptedAnswers.includes(answer)) {
+      break;
+    } else {
+      console.log('That is an invalid response. Please enter y or n');
+      answer = readline.prompt().toLowerCase().trim();
+    }
+  }
+
+  console.clear();
+  return answer === 'y' || answer === 'yes';
 }
