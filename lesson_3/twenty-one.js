@@ -19,10 +19,8 @@
 7. Compare cards and declare winner.
 
 
-// Add:
-  - what happens in tie?
-  - check playerHandValue and if the arrow function needs to run as often as it currently does
-  - if player has 21, don't ask them to hit or stay
+Add:
+  - add validation for startRound
 */
 
 const readline = require('readline-sync');
@@ -34,96 +32,150 @@ const CARDS_HIT = 1;
 const WORTH_10 = ['J', 'Q', 'K'];
 const FACE_VALUE = 10;
 const ACE_VALUE = 11;
+const POINTS_TO_WIN = 3;
 const DEALER_MIN = 17;
 
 console.log('Welcome to Twenty-One');
 
 while (true) {
-  console.clear();
-  playGame();
-  displayLineBreak();
+  let scorecard = startMatch();
+  playMatch(scorecard);
+
+  console.log(scorecard);
+
   if (!playAgain()) {
     console.log('Thank you for playing Twenty-One. Goodbye.');
     break;
   }
 }
 
-function playGame() {
+function startMatch() {
+  let scorecard = {
+    Player: 0,
+    Dealer: 0
+  };
+
+  return scorecard;
+}
+
+function playMatch(scorecard) {
+  let round = 1;
+
+  while (scorecard[PLAYER_NAME] < POINTS_TO_WIN && scorecard[DEALER_NAME] < POINTS_TO_WIN) {
+    if (!askStartRound(round)) break;
+    console.clear();
+    playGame(scorecard);
+    round += 1;
+    displayLineBreak();
+    console.log(scorecard);
+  }
+}
+
+function askStartRound(round) {
+  console.log(`Press enter when you are ready to start Round ${round}. Press 'q' to quit.`);
+  let answer = readline.prompt().trim().toLowerCase();
+
+  while (true) {
+    if (answer === 'q' || answer === 'quit') {
+      return false;
+    } else if (answer === '') {
+      return true;
+    } else {
+      console.log(`Invalid answer. Press enter to start the round or press 'q' to quit.`);
+      answer = readline.prompt().trim().toLowerCase();
+    }
+  }
+}
+
+function playGame(scorecard) {
+  let deck = initializeDeck();
   let playerCards = [];
   let dealerCards = [];
-
-  let deck = initializeDeck();
-  deal(playerCards, dealerCards, deck);
-
   let playerHandValue = () => countHandValue(playerCards);
   let dealerHandValue = () => countHandValue(dealerCards);
 
+  deal(playerCards, dealerCards, deck);
+  showBothHands(playerCards, playerHandValue, dealerCards);
+
+  playerTurn(playerHandValue, playerCards, deck, dealerCards, scorecard);
+  let playerFinalHandValue = playerHandValue();
+  checkDealerTurn(playerFinalHandValue, dealerHandValue, dealerCards, deck, scorecard);
+  let dealerFinalHandValue = dealerHandValue();
+
+  // game results will already have displayed via playerTurn and checkDealerTurn functions if a bust or win of 21 has occured.
+  if (playerFinalHandValue !== GOAL_POINTS && !bust(playerFinalHandValue) && !bust(dealerFinalHandValue)) {
+    displayGameResults(playerCards, dealerCards, playerFinalHandValue, dealerFinalHandValue, scorecard);
+  }
+}
+
+function showBothHands(playerCards, playerHandValue, dealerCards) {
   displayAllCards(PLAYER_NAME, playerCards, playerHandValue());
   displayDealerCard(dealerCards);
-
-  playerTurn(playerHandValue, playerCards, deck);
-  checkDealerTurn(playerHandValue, dealerHandValue, dealerCards, deck);
-
-  if (playerHandValue() !== GOAL_POINTS
-      && !bust(playerHandValue)
-      && !bust(dealerHandValue)) {
-    console.clear();
-    revealFinalHands(playerCards, dealerCards, playerHandValue, dealerHandValue);
-    determineWinner(playerHandValue, dealerHandValue);
-  }
 }
 
 function revealFinalHands(playerCards, dealerCards, playerHandValue, dealerHandValue) {
-  displayAllCards(PLAYER_NAME, playerCards, playerHandValue());
-  displayAllCards(DEALER_NAME, dealerCards, dealerHandValue());
+  displayAllCards(PLAYER_NAME, playerCards, playerHandValue);
+  displayAllCards(DEALER_NAME, dealerCards, dealerHandValue);
 }
 
 function determineWinner(playerHandValue, dealerHandValue) {
-  if (playerHandValue() > dealerHandValue()) {
-    outputWinner(PLAYER_NAME);
+  let winner;
+  if (playerHandValue > dealerHandValue) {
+    winner = PLAYER_NAME;
+  } else if (dealerHandValue > playerHandValue) {
+    winner = DEALER_NAME;
   } else {
-    outputWinner(DEALER_NAME);
+    winner = null;
+  }
+
+  return winner;
+}
+
+function checkDealerTurn(playerFinalHandValue, dealerHandValue, dealerCards, deck, scorecard) {
+  if (!bust(playerFinalHandValue) && playerFinalHandValue !== GOAL_POINTS) {
+    dealerTurn(dealerHandValue, dealerCards, deck, scorecard);
   }
 }
 
-
-function checkDealerTurn(playerHandValue, dealerHandValue, dealerCards, deck) {
-  if (playerHandValue() === GOAL_POINTS) {
-    outputWinner(PLAYER_NAME);
-  } else if (!bust(playerHandValue)) {
-    dealerTurn(dealerHandValue, dealerCards, deck);
-  }
-}
-
-function playerTurn(playerHandValue, playerCards, deck) {
+function playerTurn(playerHandValue, playerCards, deck, dealerCards, scorecard) {
   while (true) {
-    if (bust(playerHandValue)) {
+    if (bust(playerHandValue())) {
       outputLoser(PLAYER_NAME, 'busted', DEALER_NAME);
+      scorecard[DEALER_NAME] += 1;
       break;
     }
+
     if (playerHitOrStay() === 'hit') {
       hit(playerCards, deck);
       console.clear();
+      showBothHands(playerCards, playerHandValue, dealerCards);
+    } else if (playerHandValue() === GOAL_POINTS) {
       displayAllCards(PLAYER_NAME, playerCards, playerHandValue());
+      scorecard[PLAYER_NAME] += 1;
+      outputWinner(PLAYER_NAME);
+      break;
     } else break;
   }
 
   return false;
 }
 
-function dealerTurn(dealerHandValue, dealerCards, deck) {
+function dealerTurn(dealerHandValue, dealerCards, deck, scorecard) {
   console.clear();
+
   while (true) {
     if (dealerHandValue() < DEALER_MIN) {
       hit(dealerCards, deck);
     }
-    if (dealerHandValue() > GOAL_POINTS) {
+
+    if (bust(dealerHandValue())) {
       displayAllCards(DEALER_NAME, dealerCards, dealerHandValue());
+      scorecard[PLAYER_NAME] += 1;
       outputLoser(DEALER_NAME, 'busted', PLAYER_NAME);
       break;
     }
+
     if (dealerHandValue() >= DEALER_MIN) {
-      // displayAllCards(DEALER_NAME, dealerCards, dealerHandValue());
       break;
     }
   }
@@ -132,18 +184,18 @@ function dealerTurn(dealerHandValue, dealerCards, deck) {
 }
 
 function bust(handValue) {
-  return handValue() > 21;
+  return handValue > 21;
 }
 
 function playerHitOrStay() {
   console.log(`Would you like to hit or stay? Press 'h' for hit and 's' for stay`);
 
   while (true) {
-    let answer = readline.prompt().trim();
-    if (answer.toLowerCase() === 's' || answer.toLowerCase() === 'stay') {
+    let answer = readline.prompt().toLowerCase().trim();
+    if (answer === 's' || answer === 'stay') {
       answer = 'stay';
       return answer;
-    } else if (answer.toLowerCase() === 'h' || answer.toLowerCase() === 'hit') {
+    } else if (answer === 'h' || answer === 'hit') {
       answer = 'hit';
       return answer;
     } else {
@@ -227,6 +279,18 @@ function displayLineBreak() {
   console.log('');
 }
 
+function displayGameResults(playerCards, dealerCards, playerHandValue, dealerHandValue, scorecard) {
+  console.clear();
+  revealFinalHands(playerCards, dealerCards, playerHandValue, dealerHandValue);
+  let winner = determineWinner(playerHandValue, dealerHandValue);
+  if (winner !== null) {
+    scorecard[winner] += 1;
+    outputWinner(winner);
+  } else {
+    console.log(`It's a tie`);
+  }
+}
+
 function outputWinner(winner) {
   console.log(`🎉 ${winner} wins 🎉`);
 }
@@ -237,7 +301,7 @@ function outputLoser(loser, lostOrBusted, winner) {
 }
 
 function playAgain() {
-  console.log(`Would you like to play again? (Enter y or n)`);
+  console.log(`Would you like to start a new match? (Enter y or n)`);
   let answer = readline.prompt().toLowerCase().trim();
   let acceptedAnswers = ['y', 'yes', 'n', 'no'];
 
