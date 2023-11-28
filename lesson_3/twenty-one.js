@@ -18,9 +18,8 @@
 6. If dealer busts, player wins.
 7. Compare cards and declare winner.
 
-
-Add:
-  - add validation for startRound
+-- look at which cards are displayed at end of game
+-- clear screen if player wants to quit match but says yes to starting new round
 */
 
 const readline = require('readline-sync');
@@ -36,14 +35,14 @@ const POINTS_TO_WIN = 3;
 const DEALER_MIN = 17;
 
 console.log('Welcome to Twenty-One');
+displayLineBreak();
 
 while (true) {
   let scorecard = startMatch();
   playMatch(scorecard);
 
-  console.log(scorecard);
-
   if (!playAgain()) {
+    console.clear();
     console.log('Thank you for playing Twenty-One. Goodbye.');
     break;
   }
@@ -62,12 +61,15 @@ function playMatch(scorecard) {
   let round = 1;
 
   while (scorecard[PLAYER_NAME] < POINTS_TO_WIN && scorecard[DEALER_NAME] < POINTS_TO_WIN) {
-    if (!askStartRound(round)) break;
+    if (!askStartRound(round)) {
+      console.clear();
+      break;
+    }
     console.clear();
     playGame(scorecard);
     round += 1;
     displayLineBreak();
-    console.log(scorecard);
+    displayScore(scorecard);
   }
 }
 
@@ -147,7 +149,6 @@ function playerTurn(playerHandValue, playerCards, deck, dealerCards, scorecard) 
 
     if (playerHitOrStay() === 'hit') {
       hit(playerCards, deck);
-      console.clear();
       showBothHands(playerCards, playerHandValue, dealerCards);
     } else if (playerHandValue() === GOAL_POINTS) {
       displayAllCards(PLAYER_NAME, playerCards, playerHandValue());
@@ -244,6 +245,7 @@ function deal(playerCards, dealerCards, deck) {
 
 
 function displayAllCards(dealerOrPlayer, hand, handValue) {
+  console.clear();
   console.log(`${dealerOrPlayer} has: `);
   hand.forEach(card =>  console.log(`** ${card[1]} of ${card[0]}`));
   console.log(`** Hand value: ${handValue}`);
@@ -300,20 +302,39 @@ function outputLoser(loser, lostOrBusted, winner) {
 🎉 ${winner} wins`);
 }
 
+function displayScore(scorecard) {
+  console.log(`Tally:`);
+  console.log(`** ${PLAYER_NAME} wins: ${scorecard[PLAYER_NAME]}`);
+  console.log(`** ${DEALER_NAME} wins: ${scorecard[DEALER_NAME]}`);
+  displayLineBreak();
+}
+
 function playAgain() {
-  console.log(`Would you like to start a new match? (Enter y or n)`);
+  console.log(`Would you like to start a new match? (Press enter to start a new match or press 'q' to quit)`);
   let answer = readline.prompt().toLowerCase().trim();
-  let acceptedAnswers = ['y', 'yes', 'n', 'no'];
 
   while (true) {
-    if (acceptedAnswers.includes(answer)) {
-      break;
+    if (answer === 'q' || answer === 'quit') {
+      return false;
+    } else if (answer === '') {
+      return true;
     } else {
-      console.log('That is an invalid response. Please enter y or n');
-      answer = readline.prompt().toLowerCase().trim();
+      console.log(`Invalid answer. Press enter to start the round or press 'q' to quit.`);
+      answer = readline.prompt().trim().toLowerCase();
     }
   }
+  // let answer = readline.prompt().toLowerCase().trim();
+  // let acceptedAnswers = ['y', 'yes', 'n', 'no'];
 
-  console.clear();
-  return answer === 'y' || answer === 'yes';
+  // while (true) {
+  //   if (acceptedAnswers.includes(answer)) {
+  //     break;
+  //   } else {
+  //     console.log('That is an invalid response. Please enter y or n');
+  //     answer = readline.prompt().toLowerCase().trim();
+  //   }
+  // }
+
+  // console.clear();
+  // // return answer === 'y' || answer === 'yes';
 }
