@@ -17,9 +17,6 @@
    - repeat until total >= 17
 6. If dealer busts, player wins.
 7. Compare cards and declare winner.
-
--- look at which cards are displayed at end of game
--- clear screen if player wants to quit match but says yes to starting new round
 */
 
 const readline = require('readline-sync');
@@ -34,6 +31,7 @@ const ACE_VALUE = 11;
 const POINTS_TO_WIN = 3;
 const DEALER_MIN = 17;
 
+console.clear();
 console.log('Welcome to Twenty-One');
 displayLineBreak();
 
@@ -65,11 +63,17 @@ function playMatch(scorecard) {
       console.clear();
       break;
     }
+
     console.clear();
     playGame(scorecard);
     round += 1;
-    displayLineBreak();
     displayScore(scorecard);
+  }
+
+  if (scorecard[PLAYER_NAME] === POINTS_TO_WIN) {
+    outputWinner(PLAYER_NAME, 'match');
+  } else if (scorecard[DEALER_NAME] === POINTS_TO_WIN)  {
+    outputWinner(DEALER_NAME, 'match');
   }
 }
 
@@ -90,6 +94,7 @@ function askStartRound(round) {
 }
 
 function playGame(scorecard) {
+  console.clear();
   let deck = initializeDeck();
   let playerCards = [];
   let dealerCards = [];
@@ -101,7 +106,7 @@ function playGame(scorecard) {
 
   playerTurn(playerHandValue, playerCards, deck, dealerCards, scorecard);
   let playerFinalHandValue = playerHandValue();
-  checkDealerTurn(playerFinalHandValue, dealerHandValue, dealerCards, deck, scorecard);
+  checkDealerTurn(dealerHandValue, dealerCards, deck, scorecard, playerFinalHandValue, playerCards);
   let dealerFinalHandValue = dealerHandValue();
 
   // game results will already have displayed via playerTurn and checkDealerTurn functions if a bust or win of 21 has occured.
@@ -111,11 +116,13 @@ function playGame(scorecard) {
 }
 
 function showBothHands(playerCards, playerHandValue, dealerCards) {
+  console.clear();
   displayAllCards(PLAYER_NAME, playerCards, playerHandValue());
   displayDealerCard(dealerCards);
 }
 
 function revealFinalHands(playerCards, dealerCards, playerHandValue, dealerHandValue) {
+  console.clear();
   displayAllCards(PLAYER_NAME, playerCards, playerHandValue);
   displayAllCards(DEALER_NAME, dealerCards, dealerHandValue);
 }
@@ -133,9 +140,9 @@ function determineWinner(playerHandValue, dealerHandValue) {
   return winner;
 }
 
-function checkDealerTurn(playerFinalHandValue, dealerHandValue, dealerCards, deck, scorecard) {
+function checkDealerTurn(dealerHandValue, dealerCards, deck, scorecard, playerFinalHandValue, playerCards) {
   if (!bust(playerFinalHandValue) && playerFinalHandValue !== GOAL_POINTS) {
-    dealerTurn(dealerHandValue, dealerCards, deck, scorecard);
+    dealerTurn(dealerHandValue, dealerCards, deck, scorecard, playerFinalHandValue, playerCards);
   }
 }
 
@@ -151,17 +158,20 @@ function playerTurn(playerHandValue, playerCards, deck, dealerCards, scorecard) 
       hit(playerCards, deck);
       showBothHands(playerCards, playerHandValue, dealerCards);
     } else if (playerHandValue() === GOAL_POINTS) {
-      displayAllCards(PLAYER_NAME, playerCards, playerHandValue());
+      showBothHands(playerCards, playerHandValue, dealerCards);
       scorecard[PLAYER_NAME] += 1;
       outputWinner(PLAYER_NAME);
       break;
-    } else break;
+    } else {
+      console.clear();
+      break;
+    }
   }
 
   return false;
 }
 
-function dealerTurn(dealerHandValue, dealerCards, deck, scorecard) {
+function dealerTurn(dealerHandValue, dealerCards, deck, scorecard, playerFinalHandValue, playerCards) {
   console.clear();
 
   while (true) {
@@ -170,7 +180,8 @@ function dealerTurn(dealerHandValue, dealerCards, deck, scorecard) {
     }
 
     if (bust(dealerHandValue())) {
-      displayAllCards(DEALER_NAME, dealerCards, dealerHandValue());
+      let dealerFinalHandValue = dealerHandValue();
+      revealFinalHands(playerCards, dealerCards, playerFinalHandValue, dealerFinalHandValue);
       scorecard[PLAYER_NAME] += 1;
       outputLoser(DEALER_NAME, 'busted', PLAYER_NAME);
       break;
@@ -205,8 +216,9 @@ function playerHitOrStay() {
   }
 }
 
-function hit(playerCards, deck) {
-  dealRandomCard(playerCards, CARDS_HIT, deck);
+function hit(cards, deck) {
+  console.clear();
+  dealRandomCard(cards, CARDS_HIT, deck);
 }
 
 function countHandValue(hand) {
@@ -245,7 +257,6 @@ function deal(playerCards, dealerCards, deck) {
 
 
 function displayAllCards(dealerOrPlayer, hand, handValue) {
-  console.clear();
   console.log(`${dealerOrPlayer} has: `);
   hand.forEach(card =>  console.log(`** ${card[1]} of ${card[0]}`));
   console.log(`** Hand value: ${handValue}`);
@@ -282,7 +293,6 @@ function displayLineBreak() {
 }
 
 function displayGameResults(playerCards, dealerCards, playerHandValue, dealerHandValue, scorecard) {
-  console.clear();
   revealFinalHands(playerCards, dealerCards, playerHandValue, dealerHandValue);
   let winner = determineWinner(playerHandValue, dealerHandValue);
   if (winner !== null) {
@@ -290,16 +300,18 @@ function displayGameResults(playerCards, dealerCards, playerHandValue, dealerHan
     outputWinner(winner);
   } else {
     console.log(`It's a tie`);
+    displayLineBreak();
   }
 }
 
-function outputWinner(winner) {
-  console.log(`🎉 ${winner} wins 🎉`);
+function outputWinner(winner, roundOrMatch = 'round') {
+  console.log(`🎉 ${winner} wins the ${roundOrMatch} 🎉`);
+  displayLineBreak();
 }
 
 function outputLoser(loser, lostOrBusted, winner) {
-  console.log(`👎 ${loser} has ${lostOrBusted} 
-🎉 ${winner} wins`);
+  console.log(`👎 ${loser} has ${lostOrBusted}`);
+  outputWinner(winner);
 }
 
 function displayScore(scorecard) {
@@ -317,24 +329,11 @@ function playAgain() {
     if (answer === 'q' || answer === 'quit') {
       return false;
     } else if (answer === '') {
+      console.clear();
       return true;
     } else {
       console.log(`Invalid answer. Press enter to start the round or press 'q' to quit.`);
       answer = readline.prompt().trim().toLowerCase();
     }
   }
-  // let answer = readline.prompt().toLowerCase().trim();
-  // let acceptedAnswers = ['y', 'yes', 'n', 'no'];
-
-  // while (true) {
-  //   if (acceptedAnswers.includes(answer)) {
-  //     break;
-  //   } else {
-  //     console.log('That is an invalid response. Please enter y or n');
-  //     answer = readline.prompt().toLowerCase().trim();
-  //   }
-  // }
-
-  // console.clear();
-  // // return answer === 'y' || answer === 'yes';
 }
