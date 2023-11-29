@@ -152,9 +152,7 @@ function playerTurn(playerHandValue, playerCards, deck, dealerCards, scorecard) 
       outputLoser(PLAYER_NAME, 'busted', DEALER_NAME);
       scorecard[DEALER_NAME] += 1;
       break;
-    }
-
-    if (playerHitOrStay() === 'hit') {
+    } else if (playerHitOrStay() === 'hit') {
       hit(playerCards, deck);
       showBothHands(playerCards, playerHandValue, dealerCards);
     } else if (playerHandValue() === GOAL_POINTS) {
@@ -167,8 +165,6 @@ function playerTurn(playerHandValue, playerCards, deck, dealerCards, scorecard) 
       break;
     }
   }
-
-  return false;
 }
 
 function dealerTurn(dealerHandValue, dealerCards, deck, scorecard, playerFinalHandValue, playerCards) {
