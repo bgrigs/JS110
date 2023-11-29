@@ -234,7 +234,6 @@ function initializeDeck() {
   return deck;
 }
 
-
 function deal(playerCards, dealerCards, deck, playerHandValue) {
   dealRandomCard(playerCards, CARDS_INITIAL_HAND, deck);
   dealRandomCard(dealerCards, CARDS_INITIAL_HAND, deck);
