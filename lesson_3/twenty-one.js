@@ -28,7 +28,7 @@ const CARDS_HIT = 1;
 const WORTH_10 = ['J', 'Q', 'K'];
 const FACE_VALUE = 10;
 const ACE_VALUE = 11;
-const POINTS_TO_WIN = 3;
+const MATCH_POINTS_TO_WIN = 3;
 const DEALER_MIN = 17;
 
 console.clear();
@@ -60,7 +60,7 @@ function startMatch() {
 function playMatch(scorecard) {
   let round = 1;
 
-  while (scorecard[PLAYER_NAME] < POINTS_TO_WIN && scorecard[DEALER_NAME] < POINTS_TO_WIN) {
+  while (scorecard[PLAYER_NAME] < MATCH_POINTS_TO_WIN && scorecard[DEALER_NAME] < MATCH_POINTS_TO_WIN) {
     if (!askStartRound(round)) {
       console.clear();
       break;
@@ -72,9 +72,9 @@ function playMatch(scorecard) {
     displayScore(scorecard);
   }
 
-  if (scorecard[PLAYER_NAME] === POINTS_TO_WIN) {
+  if (scorecard[PLAYER_NAME] === MATCH_POINTS_TO_WIN) {
     outputWinner(PLAYER_NAME, 'match');
-  } else if (scorecard[DEALER_NAME] === POINTS_TO_WIN)  {
+  } else if (scorecard[DEALER_NAME] === MATCH_POINTS_TO_WIN)  {
     outputWinner(DEALER_NAME, 'match');
   }
 }
