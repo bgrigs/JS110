@@ -39,7 +39,9 @@ while (true) {
   let scorecard = startMatch();
   playMatch(scorecard);
 
-  if (!playAgain()) {
+  if (playAgain()) {
+    console.clear();
+  } else {
     console.clear();
     console.log('Thank you for playing Twenty-One. Goodbye.');
     break;
@@ -81,6 +83,10 @@ function askStartRound(round) {
   console.log(`Press enter when you are ready to start Round ${round}. Press 'q' to quit.`);
   let answer = readline.prompt().trim().toLowerCase();
 
+  return validateAnswer(answer);
+}
+
+function validateAnswer(answer) {
   while (true) {
     if (answer === 'q' || answer === 'quit') {
       return false;
@@ -321,15 +327,5 @@ function playAgain() {
   console.log(`Would you like to start a new match? (Press enter to start a new match or press 'q' to quit)`);
   let answer = readline.prompt().toLowerCase().trim();
 
-  while (true) {
-    if (answer === 'q' || answer === 'quit') {
-      return false;
-    } else if (answer === '') {
-      console.clear();
-      return true;
-    } else {
-      console.log(`Invalid answer. Press enter to start the round or press 'q' to quit.`);
-      answer = readline.prompt().trim().toLowerCase();
-    }
-  }
+  return validateAnswer(answer);
 }
