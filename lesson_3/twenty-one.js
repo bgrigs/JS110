@@ -79,26 +79,6 @@ function playMatch(scorecard) {
   }
 }
 
-function askStartRound(round) {
-  console.log(`Press enter when you are ready to start Round ${round}. Press 'q' to quit.`);
-  let answer = readline.prompt().trim().toLowerCase();
-
-  return validateAnswer(answer);
-}
-
-function validateAnswer(answer) {
-  while (true) {
-    if (answer === 'q' || answer === 'quit') {
-      return false;
-    } else if (answer === '') {
-      return true;
-    } else {
-      console.log(`Invalid answer. Press enter to start the round or press 'q' to quit.`);
-      answer = readline.prompt().trim().toLowerCase();
-    }
-  }
-}
-
 function playGame(scorecard) {
   console.clear();
   let deck = initializeDeck();
@@ -107,13 +87,16 @@ function playGame(scorecard) {
   let playerHandValue = () => countHandValue(playerCards);
   let dealerHandValue = () => countHandValue(dealerCards);
 
-  deal(playerCards, dealerCards, deck);
-  showBothHands(playerCards, playerHandValue, dealerCards);
+  deal(playerCards, dealerCards, deck, playerHandValue);
 
   playerTurn(playerHandValue, playerCards, deck, dealerCards, scorecard);
   let playerFinalHandValue = playerHandValue();
-  checkDealerTurn(dealerHandValue, dealerCards, deck, scorecard, playerFinalHandValue, playerCards);
-  let dealerFinalHandValue = dealerHandValue();
+
+  let dealerFinalHandValue;
+  if (isDealerTurnNeeded(playerFinalHandValue)) {
+    dealerTurn(dealerHandValue, dealerCards, deck, scorecard, playerFinalHandValue, playerCards);
+    dealerFinalHandValue = dealerHandValue();
+  }
 
   // game results will already have displayed via playerTurn and checkDealerTurn functions if a bust or win of 21 has occured.
   if (playerFinalHandValue !== GOAL_POINTS && !bust(playerFinalHandValue) && !bust(dealerFinalHandValue)) {
@@ -146,10 +129,12 @@ function determineWinner(playerHandValue, dealerHandValue) {
   return winner;
 }
 
-function checkDealerTurn(dealerHandValue, dealerCards, deck, scorecard, playerFinalHandValue, playerCards) {
+function isDealerTurnNeeded(playerFinalHandValue) {
   if (!bust(playerFinalHandValue) && playerFinalHandValue !== GOAL_POINTS) {
-    dealerTurn(dealerHandValue, dealerCards, deck, scorecard, playerFinalHandValue, playerCards);
+    return true;
   }
+
+  return false;
 }
 
 function playerTurn(playerHandValue, playerCards, deck, dealerCards, scorecard) {
@@ -193,8 +178,6 @@ function dealerTurn(dealerHandValue, dealerCards, deck, scorecard, playerFinalHa
       break;
     }
   }
-
-  return false;
 }
 
 function bust(handValue) {
@@ -252,9 +235,10 @@ function initializeDeck() {
 }
 
 
-function deal(playerCards, dealerCards, deck) {
+function deal(playerCards, dealerCards, deck, playerHandValue) {
   dealRandomCard(playerCards, CARDS_INITIAL_HAND, deck);
   dealRandomCard(dealerCards, CARDS_INITIAL_HAND, deck);
+  showBothHands(playerCards, playerHandValue, dealerCards);
 }
 
 
@@ -323,9 +307,28 @@ function displayScore(scorecard) {
   displayLineBreak();
 }
 
+function askStartRound(round) {
+  console.log(`Press enter when you are ready to start Round ${round}. Press 'q' to quit.`);
+  let answer = readline.prompt().trim().toLowerCase();
+  return validateAnswer(answer);
+}
+
 function playAgain() {
   console.log(`Would you like to start a new match? (Press enter to start a new match or press 'q' to quit)`);
   let answer = readline.prompt().toLowerCase().trim();
 
   return validateAnswer(answer);
+}
+
+function validateAnswer(answer) {
+  while (true) {
+    if (answer === 'q' || answer === 'quit') {
+      return false;
+    } else if (answer === '') {
+      return true;
+    } else {
+      console.log(`Invalid answer. Press enter to start the round or press 'q' to quit.`);
+      answer = readline.prompt().trim().toLowerCase();
+    }
+  }
 }
