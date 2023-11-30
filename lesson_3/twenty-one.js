@@ -36,7 +36,11 @@ console.log('Welcome to Twenty-One');
 displayLineBreak();
 
 while (true) {
-  let scorecard = startMatch();
+  let scorecard = {
+    Player: 0,
+    Dealer: 0
+  };
+
   playMatch(scorecard);
 
   if (playAgain()) {
@@ -46,15 +50,6 @@ while (true) {
     console.log('Thank you for playing Twenty-One. Goodbye.');
     break;
   }
-}
-
-function startMatch() {
-  let scorecard = {
-    Player: 0,
-    Dealer: 0
-  };
-
-  return scorecard;
 }
 
 function playMatch(scorecard) {
@@ -307,26 +302,33 @@ function displayScore(scorecard) {
 }
 
 function askStartRound(round) {
-  console.log(`Press enter when you are ready to start Round ${round}. Press 'q' to quit.`);
+  console.log(`Press enter when you are ready to start Round ${round}.`);
+  if (round > 1) console.log(`Press 'q' to exit the round.`);
   let answer = readline.prompt().trim().toLowerCase();
-  return validateAnswer(answer);
+  return validateAnswer(answer, 'round', round);
 }
 
 function playAgain() {
-  console.log(`Would you like to start a new match? (Press enter to start a new match or press 'q' to quit)`);
+  console.log('Would you like to start a new match?');
+  console.log(`Press enter to start a new match or press 'q' to quit the program.`);
   let answer = readline.prompt().toLowerCase().trim();
 
-  return validateAnswer(answer);
+  return validateAnswer(answer, 'match');
 }
 
-function validateAnswer(answer) {
+function validateAnswer(answer, roundOrMatch, roundNumber) {
   while (true) {
-    if (answer === 'q' || answer === 'quit') {
+    // quit not on option on first round
+    if ((roundOrMatch === 'match' || roundNumber > 1) && (answer === 'q' || answer === 'quit')) {
       return false;
     } else if (answer === '') {
       return true;
+    } else if (roundNumber === 1) {
+      displayLineBreak();
+      console.log(`Invalid answer. Press enter to start the ${roundOrMatch}`);
+      answer = readline.prompt().trim().toLowerCase();
     } else {
-      console.log(`Invalid answer. Press enter to start the round or press 'q' to quit.`);
+      console.log(`Invalid answer. Press enter to start the ${roundOrMatch}. Press 'q' to exit the ${roundOrMatch}.`);
       answer = readline.prompt().trim().toLowerCase();
     }
   }
